@@ -86,9 +86,18 @@ public class MessagingService extends FirebaseMessagingService {
         String customNotification = data.get("custom_notification");
         if(customNotification != null){
             try {
+                
+                PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                PowerManager.WakeLock wl =  pm.newWakeLock(PowerManager.FULL_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP
+                        | PowerManager.ON_AFTER_RELEASE, "com.evollu.react.fcm:WakeLock");
+                wl.acquire();
+
                 Bundle bundle = BundleJSONConverter.convertToBundle(new JSONObject(customNotification));
                 FIRLocalMessagingHelper helper = new FIRLocalMessagingHelper(this.getApplication());
                 helper.sendNotification(bundle);
+
+                wl.release();
+                
             } catch (JSONException e) {
                 e.printStackTrace();
             }
