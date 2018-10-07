@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.os.PowerManager; 
+import android.os.PowerManager.WakeLock; 
 
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactInstanceManager;
