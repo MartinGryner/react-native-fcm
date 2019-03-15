@@ -137,6 +137,12 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
 
             //icon
             String smallIcon = bundle.getString("icon", "ic_launcher");
+
+            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                smallIcon = bundle.getString("white_icon", "ic_stat_notification_icon");
+                notification.setColor(Color.parseColor(bundle.getString("icon_color", "#bdbdbd")));
+            }
+
             int smallIconResId = res.getIdentifier(smallIcon, "mipmap", packageName);
             if(smallIconResId == 0){
                 smallIconResId = res.getIdentifier(smallIcon, "drawable", packageName);
