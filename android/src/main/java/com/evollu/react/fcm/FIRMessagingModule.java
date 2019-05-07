@@ -114,6 +114,9 @@ public class FIRMessagingModule extends ReactContextBaseJavaModule implements Li
                     id,
                     name,
                     importance);
+
+            channel.setShowBadge(false);
+
             // Configure the notification channel.
             if(details.hasKey("description")){
                 channel.setDescription(details.getString("description"));
