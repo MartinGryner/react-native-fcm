@@ -53,7 +53,7 @@ public class FIRLocalMessagingHelper {
         }
 
         String notificationId = bundle.getString("id");
-        if(notificationId == null){
+        if (notificationId == null) {
             Log.e(TAG, "failed to schedule notification because id is missing");
             return;
         }
@@ -69,29 +69,29 @@ public class FIRLocalMessagingHelper {
 
         Intent notificationIntent = new Intent(mContext, FIRLocalMessagingPublisher.class);
         notificationIntent.putExtras(bundle);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, notificationId.hashCode(), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, Integer.parseInt(notificationId), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         Long interval = null;
         switch (bundle.getString("repeat_interval", "")) {
-          case "minute":
-              interval = (long) 60000;
-              break;
-          case "hour":
-              interval = AlarmManager.INTERVAL_HOUR;
-              break;
-          case "day":
-              interval = AlarmManager.INTERVAL_DAY;
-              break;
-          case "week":
-              interval = AlarmManager.INTERVAL_DAY * 7;
-              break;
+            case "minute":
+                interval = (long) 60000;
+                break;
+            case "hour":
+                interval = AlarmManager.INTERVAL_HOUR;
+                break;
+            case "day":
+                interval = AlarmManager.INTERVAL_DAY;
+                break;
+            case "week":
+                interval = AlarmManager.INTERVAL_DAY * 7;
+                break;
         }
 
-        if(interval != null){
+        if (interval != null) {
             getAlarmManager().setRepeating(AlarmManager.RTC_WAKEUP, fireDate, interval, pendingIntent);
-        } else if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             getAlarmManager().setExact(AlarmManager.RTC_WAKEUP, fireDate, pendingIntent);
-        }else {
+        } else {
             getAlarmManager().set(AlarmManager.RTC_WAKEUP, fireDate, pendingIntent);
         }
 
@@ -107,44 +107,67 @@ public class FIRLocalMessagingHelper {
     }
 
     public void cancelLocalNotification(String notificationId) {
-        cancelAlarm(notificationId);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove(notificationId);
-        editor.apply();
+
+        String content = sharedPreferences.getString(notificationId, "");
+
+        if (!content.equals("")) {
+
+            try {
+                Bundle bundle = BundleJSONConverter.convertToBundle(
+                        new JSONObject((String) content)
+                );
+                cancelAlarm(notificationId, bundle);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.remove(notificationId);
+                editor.apply();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+        }
     }
 
     public void cancelAllLocalNotifications() {
         java.util.Map<String, ?> keyMap = sharedPreferences.getAll();
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        for(java.util.Map.Entry<String, ?> entry:keyMap.entrySet()){
-            cancelAlarm(entry.getKey());
+        for (java.util.Map.Entry<String, ?> entry : keyMap.entrySet()) {
+            try {
+                Bundle bundle = BundleJSONConverter.convertToBundle(
+                        new JSONObject((String) entry.getValue())
+                );
+                cancelAlarm(entry.getKey(), bundle);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
+
         editor.clear();
         editor.apply();
     }
 
-    public void removeDeliveredNotification(String notificationId){
+    public void removeDeliveredNotification(String notificationId) {
         NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-        notificationManager.cancel(notificationId.hashCode());
+        notificationManager.cancel(Integer.parseInt(notificationId));
     }
 
-    public void removeAllDeliveredNotifications(){
+    public void removeAllDeliveredNotifications() {
         NotificationManager notificationManager = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.cancelAll();
     }
 
-    public void cancelAlarm(String notificationId) {
+    public void cancelAlarm(String notificationId, Bundle bundle) {
         Intent notificationIntent = new Intent(mContext, FIRLocalMessagingPublisher.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, notificationId.hashCode(), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        notificationIntent.putExtras(bundle);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, Integer.parseInt(notificationId), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         getAlarmManager().cancel(pendingIntent);
     }
 
-    public ArrayList<Bundle> getScheduledLocalNotifications(){
+    public ArrayList<Bundle> getScheduledLocalNotifications() {
         ArrayList<Bundle> array = new ArrayList<Bundle>();
         java.util.Map<String, ?> keyMap = sharedPreferences.getAll();
-        for(java.util.Map.Entry<String, ?> entry:keyMap.entrySet()){
+        for (java.util.Map.Entry<String, ?> entry : keyMap.entrySet()) {
             try {
-                JSONObject json = new JSONObject((String)entry.getValue());
+                JSONObject json = new JSONObject((String) entry.getValue());
                 Bundle bundle = BundleJSONConverter.convertToBundle(json);
                 array.add(bundle);
             } catch (JSONException e) {
@@ -154,7 +177,7 @@ public class FIRLocalMessagingHelper {
         return array;
     }
 
-    public void setApplicationForeground(boolean foreground){
+    public void setApplicationForeground(boolean foreground) {
         mIsForeground = foreground;
     }
 }
